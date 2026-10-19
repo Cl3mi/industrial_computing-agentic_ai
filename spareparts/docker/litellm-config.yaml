@@ -1,0 +1,7 @@
+# LiteLLM proxy used as A2A agent registry and gateway. No models are needed for that role.
+model_list: []
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/DATABASE_URL
+  # The proxy refuses internal URLs unless listed (SSRF guard).
+  user_url_allowed_hosts: ["inventory-agent:9101", "pricing-agent:9102", "compliance-agent:9103"]

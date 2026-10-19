@@ -1,0 +1,75 @@
+name: spareparts-a2a
+
+x-app: &app
+  image: spareparts-a2a:latest
+  build: {context: ., dockerfile: docker/Dockerfile}
+
+x-registry-env: &registry-env
+  LITELLM_URL: http://litellm:4000
+  LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:-sk-spareparts-local}
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment: {POSTGRES_USER: litellm, POSTGRES_PASSWORD: litellm, POSTGRES_DB: litellm}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck: {test: ["CMD-SHELL", "pg_isready -U litellm"], interval: 2s, retries: 30}
+
+  litellm:
+    image: ghcr.io/berriai/litellm-database:v1.105.1
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    environment:
+      DATABASE_URL: postgresql://litellm:litellm@db:5432/litellm
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:-sk-spareparts-local}
+      STORE_MODEL_IN_DB: "True"
+    volumes: ["./docker/litellm-config.yaml:/app/config.yaml:ro"]
+    ports: ["4000:4000"]
+    depends_on: {db: {condition: service_healthy}}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:4000/health/liveliness')"]
+      interval: 5s
+      retries: 40
+
+  mcp-server:
+    <<: *app
+    command: ["python", "-m", "mcp_server.server", "--transport", "streamable-http",
+              "--host", "0.0.0.0", "--port", "8000", "--allowed-host", "mcp-server:8000"]
+    environment: {SPAREPARTS_DB: /data/inventory.db, SPAREPARTS_LOG: /data/audit.log}
+    volumes: [mcpdata:/data]
+
+  inventory-agent:
+    <<: *app
+    command: ["uvicorn", "a2a_agents.inventory_agent:app", "--host", "0.0.0.0", "--port", "9101"]
+    environment:
+      <<: *registry-env
+      PUBLIC_URL: http://inventory-agent:9101/
+      MCP_SERVER_URL: http://mcp-server:8000/mcp
+    ports: ["9101:9101"]
+    depends_on: {litellm: {condition: service_healthy}, mcp-server: {condition: service_started}}
+
+  pricing-agent:
+    <<: *app
+    command: ["uvicorn", "a2a_agents.pricing_agent:app", "--host", "0.0.0.0", "--port", "9102"]
+    environment: {<<: *registry-env, PUBLIC_URL: "http://pricing-agent:9102/"}
+    ports: ["9102:9102"]
+    depends_on: {litellm: {condition: service_healthy}}
+
+  compliance-agent:
+    <<: *app
+    command: ["uvicorn", "a2a_agents.compliance_agent:app", "--host", "0.0.0.0", "--port", "9103"]
+    environment: {<<: *registry-env, PUBLIC_URL: "http://compliance-agent:9103/"}
+    ports: ["9103:9103"]
+    depends_on: {litellm: {condition: service_healthy}}
+
+  orchestrator:
+    <<: *app
+    profiles: [cli]
+    entrypoint: ["python", "-m", "orchestrator.cli"]
+    env_file: [{path: .env, required: false}]
+    environment: *registry-env
+    volumes: ["./execution_logs:/app/execution_logs"]
+    depends_on: [inventory-agent, pricing-agent, compliance-agent]
+
+volumes:
+  pgdata:
+  mcpdata:

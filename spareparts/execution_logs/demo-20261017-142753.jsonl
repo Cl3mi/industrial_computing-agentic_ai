@@ -1,0 +1,20 @@
+{"type": "question", "text": "How many 6204 bearings do we have in stock and which supplier delivers them?"}
+{"type": "tool_call", "step": 1, "tool": "lookup_inventory", "arguments": {"query": "6204 bearings"}}
+{"type": "observation", "step": 1, "tool": "lookup_inventory", "text": "{\"result\": []}"}
+{"type": "tool_call", "step": 2, "tool": "lookup_inventory", "arguments": {"query": "6204"}}
+{"type": "observation", "step": 2, "tool": "lookup_inventory", "text": "{\n  \"sku\": \"BRG-6204\",\n  \"name\": \"Deep-groove ball bearing 6204\",\n  \"stock\": 1200,\n  \"unit_price\": 3.4,\n  \"supplier\": \"Nordlager GmbH\"\n}"}
+{"type": "answer", "text": "We have 1200 deep-groove ball bearings 6204 in stock, supplied by Nordlager GmbH."}
+{"type": "question", "text": "A customer wants 800 units of BRG-6204. What is the total price with the volume discount?"}
+{"type": "tool_call", "step": 1, "tool": "lookup_inventory", "arguments": {"query": "BRG-6204"}}
+{"type": "observation", "step": 1, "tool": "lookup_inventory", "text": "{\n  \"sku\": \"BRG-6204\",\n  \"name\": \"Deep-groove ball bearing 6204\",\n  \"stock\": 1200,\n  \"unit_price\": 3.4,\n  \"supplier\": \"Nordlager GmbH\"\n}"}
+{"type": "tool_call", "step": 2, "tool": "calculate_volume_discount", "arguments": {"quantity": 800, "unit_price": 3.4}}
+{"type": "observation", "step": 2, "tool": "calculate_volume_discount", "text": "{\n  \"unit_price\": 3.4,\n  \"quantity\": 800,\n  \"tier\": \"500+\",\n  \"discount_rate\": 0.1,\n  \"gross\": 2720.0,\n  \"discount_amount\": 272.0,\n  \"total\": 2448.0\n}"}
+{"type": "tool_call", "step": 3, "tool": "audit_log", "arguments": {"event_type": "quote", "details": "Quoted 800 units of BRG-6204 for a total of 2448 EUR."}}
+{"type": "observation", "step": 3, "tool": "audit_log", "text": "{\n  \"timestamp\": \"2026-10-17T12:28:29.476705+00:00\",\n  \"event_type\": \"quote\",\n  \"details\": \"Quoted 800 units of BRG-6204 for a total of 2448 EUR.\"\n}"}
+{"type": "answer", "text": "The total price for 800 units of BRG-6204 is 2448 EUR, including a 10% volume discount."}
+{"type": "question", "text": "Which parts are running low on stock (below 50 units)? Log an inquiry for the purchasing team."}
+{"type": "tool_call", "step": 1, "tool": "list_low_stock", "arguments": {"threshold": 50}}
+{"type": "observation", "step": 1, "tool": "list_low_stock", "text": "{\n  \"sku\": \"HYD-HOSE-2M\",\n  \"name\": \"Hydraulic hose 2 m, 1/2 inch\",\n  \"stock\": 18,\n  \"unit_price\": 48.5,\n  \"supplier\": \"Hydrotec AG\"\n}\n{\n  \"sku\": \"HYD-SEAL-40\",\n  \"name\": \"Hydraulic piston seal 40 mm\",\n  \"stock\": 35,\n  \"unit_price\": 12.8,\n  \"supplier\": \"Hydrotec AG\"\n}\n{\n  \"sku\": \"MOT-24V-200\",\n  \"name\": \"DC motor 24 V 200 W\",\n  \"stock\": 42,\n  \"unit_price\": 129.0,\n  \"supplier\": \"Voltwerk\"\n}"}
+{"type": "tool_call", "step": 2, "tool": "audit_log", "arguments": {"event_type": "inquiry", "details": "Purchasing team needs to reorder the following parts: Hydraulic hose 2 m, 1/2 inch (SKU: HYD-HOSE-2M), Hydraulic piston seal 40 mm (SKU: HYD-SEAL-40), DC motor 24 V 200 W (SKU: MOT-24V-200)."}}
+{"type": "observation", "step": 2, "tool": "audit_log", "text": "{\n  \"timestamp\": \"2026-10-17T12:28:35.342446+00:00\",\n  \"event_type\": \"inquiry\",\n  \"details\": \"Purchasing team needs to reorder the following parts: Hydraulic hose 2 m, 1/2 inch (SKU: HYD-HOSE-2M), Hydraulic piston seal 40 mm (SKU: HYD-SEAL-40), DC motor 24 V 200 W (SKU: MOT-24V-200).\"\n}"}
+{"type": "answer", "text": "The following parts are running low on stock: Hydraulic hose 2 m, 1/2 inch (SKU: HYD-HOSE-2M), Hydraulic piston seal 40 mm (SKU: HYD-SEAL-40), DC motor 24 V 200 W (SKU: MOT-24V-200). An inquiry has been logged for the purchasing team."}
